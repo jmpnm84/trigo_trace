@@ -6,15 +6,9 @@
     <meta name="theme-color" content="#005596">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="TRIGO">
     <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    <!-- Ícones para PWA -->
-    <link rel="icon" type="image/png" href="https://github.com/user-attachments/assets/22176d23-b223-46c8-b188-53c3e9d5bdaf">
-    <link rel="apple-touch-icon" href="https://github.com/user-attachments/assets/22176d23-b223-46c8-b188-53c3e9d5bdaf">
-
-    <!-- Manifesto PWA (Contém o ícone e configurações de instalação) -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvMjIxNzZkMjMtYjIyMy00NmM4LWIxODgtNTNjM2U5ZDViZGFmIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8yNjkzLzI2OTM0OTkucG5nIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9CiAgXQp9">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -35,12 +29,10 @@
 
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         
-        /* Ajuste do novo Logotipo */
-        .logo-container img {
-            height: 45px;
-            width: auto;
-            display: block;
-        }
+        .logo-container { display: flex; align-items: center; gap: 8px; user-select: none; }
+        .logo-text { font-family: 'Arial Black', Gadget, sans-serif; font-size: 26px; font-weight: 900; color: var(--p); letter-spacing: -1px; line-height: 1; }
+        .logo-symbol { display: flex; flex-direction: column; gap: 2px; }
+        .logo-bar { width: 12px; height: 4px; background: var(--trigo-green); border-radius: 1px; }
 
         #datetime-container { text-align: center; font-family: 'Courier New', Courier, monospace; color: var(--p-dark); line-height: 1.2; }
         #live-date { font-size: 11px; font-weight: bold; display: block; }
@@ -103,8 +95,13 @@
         </div>
         
         <div class="logo-container">
-            <!-- Novo logotipo de imagem -->
-            <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo">
+            <div class="logo-text">TRIGO</div>
+            <div class="logo-symbol">
+                <div class="logo-bar"></div>
+                <div class="logo-bar"></div>
+                <div class="logo-bar"></div>
+                <div class="logo-bar"></div>
+            </div>
         </div>
     </header>
 
@@ -218,10 +215,10 @@
 <datalist id="dl-missoes"></datalist>
 
 <script>
-    /* REGISTO DE SERVICE WORKER PARA PWA (Obrigatório para instalação) */
+    /* REGISTO DE SERVICE WORKER PARA PWA (OFFLINE) */
     if ('serviceWorker' in navigator) {
         const swCode = `
-            const CACHE_NAME = 'trigo-pwa-v1';
+            const CACHE_NAME = 'trigo-v16';
             self.addEventListener('install', e => {
                 e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
             });
