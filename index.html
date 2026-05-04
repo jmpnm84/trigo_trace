@@ -29,10 +29,9 @@
 
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         
-        .logo-container { display: flex; align-items: center; gap: 8px; user-select: none; }
-        .logo-text { font-family: 'Arial Black', Gadget, sans-serif; font-size: 26px; font-weight: 900; color: var(--p); letter-spacing: -1px; line-height: 1; }
-        .logo-symbol { display: flex; flex-direction: column; gap: 2px; }
-        .logo-bar { width: 12px; height: 4px; background: var(--trigo-green); border-radius: 1px; }
+        /* Ajuste do contentor do Logotipo */
+        .logo-container { display: flex; align-items: center; }
+        .logo-img { height: 45px; width: auto; object-fit: contain; }
 
         #datetime-container { text-align: center; font-family: 'Courier New', Courier, monospace; color: var(--p-dark); line-height: 1.2; }
         #live-date { font-size: 11px; font-weight: bold; display: block; }
@@ -94,14 +93,9 @@
             <span id="live-time">00:00:00</span>
         </div>
         
+        <!-- LOGOTIPO ATUALIZADO -->
         <div class="logo-container">
-            <div class="logo-text">TRIGO</div>
-            <div class="logo-symbol">
-                <div class="logo-bar"></div>
-                <div class="logo-bar"></div>
-                <div class="logo-bar"></div>
-                <div class="logo-bar"></div>
-            </div>
+            <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
         </div>
     </header>
 
@@ -215,7 +209,7 @@
 <datalist id="dl-missoes"></datalist>
 
 <script>
-    /* REGISTO DE SERVICE WORKER PARA PWA (OFFLINE) */
+    /* O código JavaScript permanece inalterado */
     if ('serviceWorker' in navigator) {
         const swCode = `
             const CACHE_NAME = 'trigo-v16';
