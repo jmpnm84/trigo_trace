@@ -75,6 +75,11 @@
         .pagination-container { display: flex; justify-content: center; gap: 5px; margin-top: 15px; padding-bottom: 10px; }
         .page-btn { background: white; border: 1px solid var(--p-dark); padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         .page-btn.active { background: var(--p-dark); color: white; }
+
+        /* Estilo para itens clicáveis de remoção */
+        .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
+        .buffer-item:hover { background: #fff5f5; color: var(--nok); }
+        .buffer-item:hover::after { content: '✖ Remover'; font-weight: bold; font-size: 8px; }
     </style>
 </head>
 <body>
@@ -208,7 +213,6 @@
 <datalist id="dl-missoes"></datalist>
 
 <script>
-    /* O código JavaScript permanece inalterado */
     if ('serviceWorker' in navigator) {
         const swCode = `
             const CACHE_NAME = 'trigo-v16';
@@ -268,8 +272,29 @@
         document.getElementById('bar-ok').style.width = Math.min(pOK, 100) + "%";
         document.getElementById('bar-nok').style.width = Math.min(pNOK, 100) + "%";
         
-        document.getElementById('ok-list').innerHTML = bufferOK.map(i => `<div>${i.dm} <small>(${i.status})</small></div>`).reverse().join('');
-        document.getElementById('nok-list').innerHTML = bufferNOK.map(i => `<div>${i.dm}</div>`).reverse().join('');
+        // Listas com função de clique para remover
+        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => 
+            `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">
+                <span>${i.dm} <small>(${i.status})</small></span>
+            </div>`
+        ).reverse().join('');
+
+        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => 
+            `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">
+                <span>${i.dm}</span>
+            </div>`
+        ).reverse().join('');
+    }
+
+    // NOVA FUNÇÃO: Remover item se houver erro
+    function removeFromBuffer(type, index) {
+        if(confirm("Remover esta peça da lista atual?")) {
+            if(type === 'OK') bufferOK.splice(index, 1);
+            else bufferNOK.splice(index, 1);
+            saveBuffers();
+            updateUI();
+            showPopup("Peça removida.");
+        }
     }
 
     function handleScan(e) {
