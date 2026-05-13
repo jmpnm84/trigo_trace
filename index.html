@@ -28,7 +28,6 @@
 
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         
-        /* Ajuste do contentor do Logotipo */
         .logo-container { display: flex; align-items: center; }
         .logo-img { height: 45px; width: auto; object-fit: contain; }
 
@@ -72,14 +71,12 @@
         .modal-content { background:white; padding:15px; border-radius:10px; text-align:center; width:95%; max-width:320px; }
         .btn-decision { padding: 12px; font-size: 0.9em; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
         #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; }
-        .pagination-container { display: flex; justify-content: center; gap: 5px; margin-top: 15px; padding-bottom: 10px; }
-        .page-btn { background: white; border: 1px solid var(--p-dark); padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        .page-btn.active { background: var(--p-dark); color: white; }
-
-        /* Estilo para itens clicáveis de remoção */
+        
         .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
         .buffer-item:hover { background: #fff5f5; color: var(--nok); }
-        .buffer-item:hover::after { content: '✖ Remover'; font-weight: bold; font-size: 8px; }
+        
+        /* Botão Troca Turno */
+        .btn-turno { background: var(--ret); color: white; border: none; border-radius: 4px; font-size: 8px; padding: 2px 5px; cursor: pointer; margin-top: 2px; display: block; width: fit-content; }
     </style>
 </head>
 <body>
@@ -96,8 +93,6 @@
             <span id="live-date">00/00/0000</span>
             <span id="live-time">00:00:00</span>
         </div>
-        
-        <!-- LOGOTIPO ATUALIZADO -->
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
         </div>
@@ -106,7 +101,11 @@
     <section id="view-registo">
         <div class="header-section">
             <div class="inputs-row">
-                <div><label>Inspetor</label><input type="text" id="inspetor" list="dl-inspetores"></div>
+                <div>
+                    <label>Inspetor</label>
+                    <input type="text" id="inspetor" list="dl-inspetores">
+                    <button class="btn-turno" onclick="trocaTurno()">⇄ TROCA TURNO</button>
+                </div>
                 <div><label>Referência</label><input type="text" id="referencia" list="dl-refs" onchange="autoQty(this.value)"></div>
                 <div><label>Missão</label><input type="text" id="missao" list="dl-missoes"></div>
                 <div><label>QTD</label><input type="number" id="quantidade" min="1" onchange="updateUI()"></div>
@@ -161,29 +160,18 @@
                 <button onclick="clearHistorySecure()" style="background:var(--nok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">LIMPAR</button>
             </div>
         </div>
-
         <div class="filter-bar">
             <div><label>Inspetor</label><select id="f-insp" onchange="renderHist()"></select></div>
             <div><label>Ref</label><select id="f-ref" onchange="renderHist()"></select></div>
-            <div><label>Missão</label><select id="f-miss" onchange="renderHist()"></select></div>
-            <div><label>Pesquisar DM</label><input type="text" id="f-dm-search" placeholder="Procurar DM..." oninput="renderHist()"></div>
-            <div><label>Etiqueta</label><input type="text" id="f-etiq" oninput="renderHist()"></div>
-            <div><label>Status</label>
-                <select id="f-status" onchange="renderHist()">
-                    <option value="">Tudo</option><option value="OK">OK</option>
-                    <option value="RETRABALHADA">RETRABALHADA</option><option value="NOK">NOK</option>
-                </select>
-            </div>
-            <div><label>Ver</label><select id="p-limit" onchange="renderHist()"><option value="20">20</option><option value="50">50</option><option value="999999">TUDO</option></select></div>
+            <div><label>Status</label><select id="f-status" onchange="renderHist()"><option value="">Tudo</option><option value="OK">OK</option><option value="RETRABALHADA">RETRABALHADA</option><option value="NOK">NOK</option></select></div>
+            <div><label>Pesquisar DM</label><input type="text" id="f-dm-search" oninput="renderHist()"></div>
         </div>
-
         <div class="table-wrapper">
             <table>
                 <thead><tr><th>Data</th><th>Insp</th><th>Ref</th><th>Missão</th><th>DM</th><th>Status</th><th>Etiqueta</th></tr></thead>
                 <tbody id="tbody-hist"></tbody>
             </table>
         </div>
-        <div id="pagination" class="pagination-container"></div>
     </section>
 </main>
 
@@ -214,21 +202,12 @@
 
 <script>
     if ('serviceWorker' in navigator) {
-        const swCode = `
-            const CACHE_NAME = 'trigo-v16';
-            self.addEventListener('install', e => {
-                e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
-            });
-            self.addEventListener('fetch', e => {
-                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
-            });
-        `;
+        const swCode = `const CACHE_NAME = 'trigo-v16'; self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./']))); }); self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))); });`;
         const blob = new Blob([swCode], { type: 'text/javascript' });
         const swUrl = URL.createObjectURL(blob);
         navigator.serviceWorker.register(swUrl).catch(err => console.log('SW Error', err));
     }
 
-    let currentPage = 1;
     let db = JSON.parse(localStorage.getItem('traca_v16_db')) || [];
     let memory = JSON.parse(localStorage.getItem('traca_v16_memory')) || { users:[], refs:{}, missions:[] };
     let savedBuffers = JSON.parse(localStorage.getItem('traca_v16_buffers')) || { ok: [], nok: [] };
@@ -243,12 +222,19 @@
     }
     setInterval(updateClock, 1000);
 
+    function trocaTurno() {
+        document.getElementById('inspetor').value = "";
+        document.getElementById('missao').value = "";
+        document.getElementById('inspetor').focus();
+        showPopup("Troca de turno: Introduza o novo Inspetor.", "info");
+    }
+
     function switchTab(t) {
         document.getElementById('view-registo').style.display = t === 'registo' ? 'block' : 'none';
         document.getElementById('view-historico').style.display = t === 'historico' ? 'block' : 'none';
         document.getElementById('btn-reg').classList.toggle('active', t === 'registo');
         document.getElementById('btn-hist').classList.toggle('active', t === 'historico');
-        if(t === 'historico') { updateFilterOptions(); renderHist(); } else { setTimeout(focusDM, 100); }
+        if(t === 'historico') { updateFilterOptions(); renderHist(); } else { focusDM(); }
     }
 
     function showPopup(msg, type = 'success') {
@@ -264,36 +250,20 @@
         const qNum = parseInt(qVal) || 0;
         const pOK = qNum > 0 ? Math.round((bufferOK.length / qNum) * 100) : 0;
         const pNOK = qNum > 0 ? Math.round((bufferNOK.length / qNum) * 100) : 0;
-        
         document.getElementById('ui-ok').innerText = `${bufferOK.length} / ${qVal || '-'}`;
         document.getElementById('ui-nok').innerText = `${bufferNOK.length} / ${qVal || '-'}`;
         document.getElementById('perc-ok').innerText = `${pOK}%`;
         document.getElementById('perc-nok').innerText = `${pNOK}%`;
         document.getElementById('bar-ok').style.width = Math.min(pOK, 100) + "%";
         document.getElementById('bar-nok').style.width = Math.min(pNOK, 100) + "%";
-        
-        // Listas com função de clique para remover
-        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => 
-            `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">
-                <span>${i.dm} <small>(${i.status})</small></span>
-            </div>`
-        ).reverse().join('');
-
-        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => 
-            `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">
-                <span>${i.dm}</span>
-            </div>`
-        ).reverse().join('');
+        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm} <small>(${i.status})</small></div>`).reverse().join('');
+        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm}</div>`).reverse().join('');
     }
 
-    // NOVA FUNÇÃO: Remover item se houver erro
-    function removeFromBuffer(type, index) {
-        if(confirm("Remover esta peça da lista atual?")) {
-            if(type === 'OK') bufferOK.splice(index, 1);
-            else bufferNOK.splice(index, 1);
-            saveBuffers();
-            updateUI();
-            showPopup("Peça removida.");
+    function removeFromBuffer(type, idx) {
+        if(confirm("Remover esta peça?")) {
+            if(type === 'OK') bufferOK.splice(idx, 1); else bufferNOK.splice(idx, 1);
+            saveBuffers(); updateUI();
         }
     }
 
@@ -302,16 +272,10 @@
             const dm = e.target.value.trim().toUpperCase(); 
             e.target.value = "";
             if(!dm) return;
-
-            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) {
-                showPopup("ERRO: " + dm + " já existe", "error");
-                return;
+            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) { showPopup("Já existe!", "error"); return; }
+            if(!document.getElementById('referencia').value || !document.getElementById('quantidade').value || !document.getElementById('inspetor').value) {
+                showPopup("Falta Inspetor, Ref ou QTD!", "error"); return;
             }
-
-            if(!document.getElementById('referencia').value || !document.getElementById('quantidade').value) {
-                showPopup("Preencha Ref e QTD!", "error"); return;
-            }
-            
             tempDM = dm;
             document.getElementById('dm-display').innerText = dm;
             document.getElementById('modal-status').style.display = 'flex';
@@ -325,95 +289,45 @@
             missao: document.getElementById('missao').value.trim(),
             dm: tempDM, status: status
         };
-
         if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
         if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
         memory.refs[item.ref] = document.getElementById('quantidade').value;
         localStorage.setItem('traca_v16_memory', JSON.stringify(memory));
-        
         updateDatalists();
         document.getElementById('modal-status').style.display = 'none';
-        
+        if(status === 'OK' || status === 'RETRABALHADA') bufferOK.push(item); else bufferNOK.push(item);
         const targetQty = parseInt(document.getElementById('quantidade').value);
-        if(status === 'OK' || status === 'RETRABALHADA') {
-            bufferOK.push(item);
-            if(bufferOK.length >= targetQty) { currentLoteType = "OK"; openFechoModal(); }
-        } else {
-            bufferNOK.push(item);
-            if(bufferNOK.length >= targetQty) { currentLoteType = "NOK"; openFechoModal(); }
-        }
-        
-        saveBuffers();
-        updateUI();
-        focusDM();
+        if(bufferOK.length >= targetQty) { currentLoteType = "OK"; openFechoModal(); }
+        else if(bufferNOK.length >= targetQty) { currentLoteType = "NOK"; openFechoModal(); }
+        saveBuffers(); updateUI(); focusDM();
     }
 
     function saveBuffers() { localStorage.setItem('traca_v16_buffers', JSON.stringify({ ok: bufferOK, nok: bufferNOK })); }
 
-    function confirmFinishLote() {
-        const etiq = document.getElementById('etiq-final').value.trim();
-        const data = document.getElementById('data-fecho-lote').value;
-        
-        if(!etiq) { showPopup("Erro: Falta Etiqueta!", "error"); return; }
-        if(!data) { showPopup("Erro: Falta Data!", "error"); return; }
-
-        const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
-        lote.forEach(i => { i.etiqueta = etiq; i.data_producao = data; db.push(i); });
-        
-        localStorage.setItem('traca_v16_db', JSON.stringify(db));
-        if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
-        
-        saveBuffers();
-        document.getElementById('modal-fecho').style.display = 'none';
-        document.getElementById('etiq-final').value = "";
-        updateUI(); 
-        showPopup("Lote Finalizado!"); 
-        focusDM();
-    }
-
-    function closeModalFecho() {
-        document.getElementById('modal-fecho').style.display = 'none';
-        document.getElementById('etiq-final').value = "";
-        currentLoteType = "";
-        focusDM();
-    }
-
-    function exportExcel() {
-        const ws = XLSX.utils.json_to_sheet(db);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Dados");
-        XLSX.writeFile(wb, "Traca_Export.xlsx");
-    }
-
-    function importExcel(input) {
-        const file = input.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-            if(jsonData.length > 0) {
-                db = db.concat(jsonData);
-                localStorage.setItem('traca_v16_db', JSON.stringify(db));
-                renderHist();
-                showPopup("Importado com sucesso!");
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    function focusDM() { document.getElementById('input-dm').focus(); }
-    function autoQty(val) { updateUI(); focusDM(); }
-    function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; focusDM(); }
-    function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
-    
     function openFechoModal() {
         document.getElementById('fecho-titulo').innerText = `FECHAR LOTE ${currentLoteType}`;
         document.getElementById('data-fecho-lote').valueAsDate = new Date();
         document.getElementById('modal-fecho').style.display = 'flex';
         setTimeout(() => document.getElementById('etiq-final').focus(), 300);
     }
+
+    function confirmFinishLote() {
+        const etiq = document.getElementById('etiq-final').value.trim();
+        const data = document.getElementById('data-fecho-lote').value;
+        if(!etiq || !data) { showPopup("Faltam dados!", "error"); return; }
+        const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
+        lote.forEach(i => { i.etiqueta = etiq; i.data_producao = data; db.push(i); });
+        localStorage.setItem('traca_v16_db', JSON.stringify(db));
+        if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
+        saveBuffers(); document.getElementById('modal-fecho').style.display = 'none';
+        document.getElementById('etiq-final').value = ""; updateUI(); showPopup("Lote Finalizado!"); focusDM();
+    }
+
+    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; focusDM(); }
+    function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; focusDM(); }
+    function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
+    function focusDM() { document.getElementById('input-dm').focus(); }
+    function autoQty(val) { focusDM(); }
 
     function updateDatalists() {
         document.getElementById('dl-inspetores').innerHTML = memory.users.map(u => `<option value="${u}">`).join('');
@@ -424,44 +338,27 @@
     function renderHist() {
         const fi = document.getElementById('f-insp').value;
         const fr = document.getElementById('f-ref').value;
-        const fm = document.getElementById('f-miss').value;
         const fs = document.getElementById('f-status').value;
-        const fe = document.getElementById('f-etiq').value.trim();
-        const fdm = document.getElementById('f-dm-search').value.trim().toUpperCase(); 
-        const limit = parseInt(document.getElementById('p-limit').value);
-        
-        const filtered = db.filter(p => 
-            (fi === "" || p.insp === fi) && 
-            (fr === "" || p.ref === fr) && 
-            (fm === "" || p.missao === fm) && 
-            (fs === "" || p.status === fs) &&
-            (fe === "" || String(p.etiqueta).includes(fe)) &&
-            (fdm === "" || String(p.dm).toUpperCase().includes(fdm))
-        );
-
-        document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
-        const paginated = filtered.slice().reverse().slice((currentPage-1)*limit, currentPage*limit);
-        
-        document.getElementById('tbody-hist').innerHTML = paginated.map(p => {
-            let color = p.status === 'NOK' ? 'red' : (p.status === 'RETRABALHADA' ? '#d4af37' : 'green');
-            return `<tr><td>${p.data_producao}</td><td>${p.insp}</td><td>${p.ref}</td><td>${p.missao}</td><td>${p.dm}</td><td style="color:${color};font-weight:bold">${p.status}</td><td>${p.etiqueta}</td></tr>`;
-        }).join('');
+        const fdm = document.getElementById('f-dm-search').value.trim().toUpperCase();
+        const filtered = db.filter(p => (fi==="" || p.insp===fi) && (fr==="" || p.ref===fr) && (fs==="" || p.status===fs) && (fdm==="" || p.dm.includes(fdm)));
+        document.getElementById('tbody-hist').innerHTML = filtered.slice().reverse().map(p => `<tr><td>${p.data_producao}</td><td>${p.insp}</td><td>${p.ref}</td><td>${p.missao}</td><td>${p.dm}</td><td>${p.status}</td><td>${p.etiqueta}</td></tr>`).join('');
     }
 
     function updateFilterOptions() {
-        const insps = [...new Set(db.map(i => i.insp))].sort();
-        const refs = [...new Set(db.map(i => i.ref))].sort();
-        const missoes = [...new Set(db.map(i => i.missao))].sort();
+        const insps = [...new Set(db.map(i => i.insp))];
+        const refs = [...new Set(db.map(i => i.ref))];
         document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + insps.map(i => `<option value="${i}">${i}</option>`).join('');
         document.getElementById('f-ref').innerHTML = '<option value="">Todas</option>' + refs.map(r => `<option value="${r}">${r}</option>`).join('');
-        document.getElementById('f-miss').innerHTML = '<option value="">Todas</option>' + missoes.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
-    function clearHistorySecure() { 
-        if(confirm("Apagar histórico permanente?") && prompt("Digite APAGAR para confirmar") === "APAGAR") {
-            db = []; localStorage.setItem('traca_v16_db', '[]'); renderHist(); showPopup("Limpo!");
-        }
+    function exportExcel() {
+        const ws = XLSX.utils.json_to_sheet(db);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Dados");
+        XLSX.writeFile(wb, "Traca_Export.xlsx");
     }
+
+    function clearHistorySecure() { if(confirm("Limpar tudo?") && prompt("Digite APAGAR") === "APAGAR") { db = []; localStorage.setItem('traca_v16_db', '[]'); renderHist(); } }
 
     window.onload = () => { updateClock(); updateDatalists(); updateUI(); focusDM(); };
 </script>
