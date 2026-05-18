@@ -74,9 +74,12 @@
         
         .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
         .buffer-item:hover { background: #fff5f5; color: var(--nok); }
-        
-        /* Botão Troca Turno */
-        .btn-turno { background: var(--ret); color: white; border: none; border-radius: 4px; font-size: 8px; padding: 2px 5px; cursor: pointer; margin-top: 2px; display: block; width: fit-content; }
+
+        /* Estilos de Cores para o Status no Histórico */
+        .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
+        .status-ok { background-color: var(--ok); }
+        .status-retrabalhada { background-color: var(--ret); }
+        .status-nok { background-color: var(--nok); }
     </style>
 </head>
 <body>
@@ -104,7 +107,6 @@
                 <div>
                     <label>Inspetor</label>
                     <input type="text" id="inspetor" list="dl-inspetores">
-                    <button class="btn-turno" onclick="trocaTurno()">⇄ TROCA TURNO</button>
                 </div>
                 <div><label>Referência</label><input type="text" id="referencia" list="dl-refs" onchange="autoQty(this.value)"></div>
                 <div><label>Missão</label><input type="text" id="missao" list="dl-missoes"></div>
@@ -223,13 +225,6 @@
     }
     setInterval(updateClock, 1000);
 
-    function trocaTurno() {
-        document.getElementById('inspetor').value = "";
-        document.getElementById('missao').value = "";
-        document.getElementById('inspetor').focus();
-        showPopup("Troca de turno: Introduza o novo Inspetor.", "info");
-    }
-
     function switchTab(t) {
         document.getElementById('view-registo').style.display = t === 'registo' ? 'block' : 'none';
         document.getElementById('view-historico').style.display = t === 'historico' ? 'block' : 'none';
@@ -342,12 +337,30 @@
         const fs = document.getElementById('f-status').value;
         const fdm = document.getElementById('f-dm-search').value.trim().toUpperCase();
         const filtered = db.filter(p => (fi==="" || p.insp===fi) && (fr==="" || p.ref===fr) && (fs==="" || p.status===fs) && (fdm==="" || p.dm.includes(fdm)));
-        document.getElementById('tbody-hist').innerHTML = filtered.slice().reverse().map(p => `<tr><td>${p.data_producao}</td><td>${p.insp}</td><td>${p.ref}</td><td>${p.missao}</td><td>${p.dm}</td><td>${p.status}</td><td>${p.etiqueta}</td></tr>`).join('');
+        
+        document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
+
+        document.getElementById('tbody-hist').innerHTML = filtered.slice().reverse().map(p => {
+            let statusClass = '';
+            if (p.status === 'OK') statusClass = 'status-ok';
+            else if (p.status === 'RETRABALHADA') statusClass = 'status-retrabalhada';
+            else if (p.status === 'NOK') statusClass = 'status-nok';
+
+            return `<tr>
+                <td>${p.data_producao || ''}</td>
+                <td>${p.insp || ''}</td>
+                <td>${p.ref || ''}</td>
+                <td>${p.missao || ''}</td>
+                <td>${p.dm || ''}</td>
+                <td><span class="status-badge ${statusClass}">${p.status || ''}</span></td>
+                <td>${p.etiqueta || ''}</td>
+            </tr>`;
+        }).join('');
     }
 
     function updateFilterOptions() {
-        const insps = [...new Set(db.map(i => i.insp))];
-        const refs = [...new Set(db.map(i => i.ref))];
+        const insps = [...new Set(db.map(i => i.insp).filter(Boolean))];
+        const refs = [...new Set(db.map(i => i.ref).filter(Boolean))];
         document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + insps.map(i => `<option value="${i}">${i}</option>`).join('');
         document.getElementById('f-ref').innerHTML = '<option value="">Todas</option>' + refs.map(r => `<option value="${r}">${r}</option>`).join('');
     }
@@ -357,6 +370,79 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Dados");
         XLSX.writeFile(wb, "Traca_Export.xlsx");
+    }
+
+    function importExcel(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Converte a folha do Excel para JSON
+                const importedData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (importedData.length === 0) {
+                    showPopup("O ficheiro Excel está vazio!", "error");
+                    return;
+                }
+
+                // Mapeamento e validação básica das colunas esperadas
+                // Aceita chaves baseadas no cabeçalho exportado (ex: data_producao, insp, ref, etc.)
+                const normalizedData = importedData.map(row => ({
+                    data_producao: row.data_producao || row.Data || "",
+                    insp: row.insp || row.Insp || "",
+                    ref: row.ref || row.Ref || "",
+                    missao: row.missao || row.Missão || row.Missao || "",
+                    dm: String(row.dm || row.DM || "").trim().toUpperCase(),
+                    status: String(row.status || row.Status || "").trim().toUpperCase(),
+                    etiqueta: row.etiqueta || row.Etiqueta || ""
+                })).filter(row => row.dm); // Garante que a linha tem um Data Matrix válido
+
+                if (normalizedData.length === 0) {
+                    showPopup("Formato inválido ou sem dados válidos!", "error");
+                    return;
+                }
+
+                // Mescla os dados sem duplicar o código Data Matrix (DM)
+                let novosRegistos = 0;
+                normalizedData.forEach(item => {
+                    if (!db.some(existente => existente.dm === item.dm)) {
+                        db.push(item);
+                        novosRegistos++;
+                        
+                        // Atualiza a memória inteligente local do sistema com base nos dados importados
+                        if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
+                        if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
+                        if(item.ref && !memory.refs[item.ref]) memory.refs[item.ref] = 1;
+                    }
+                });
+
+                // Guarda tudo de volta no LocalStorage
+                localStorage.setItem('traca_v16_db', JSON.stringify(db));
+                localStorage.setItem('traca_v16_memory', JSON.stringify(memory));
+                
+                showPopup(`Importado! +${novosRegistos} novos registos.`, "success");
+                
+                // Força atualização da vista do histórico
+                updateFilterOptions();
+                renderHist();
+                updateDatalists();
+                
+            } catch (err) {
+                console.error(err);
+                showPopup("Erro ao ler o ficheiro Excel!", "error");
+            }
+            // Limpa o input para permitir reimportar o mesmo ficheiro se necessário
+            input.value = "";
+        };
+        
+        reader.readAsArrayBuffer(file);
     }
 
     function clearHistorySecure() { if(confirm("Limpar tudo?") && prompt("Digite APAGAR") === "APAGAR") { db = []; localStorage.setItem('traca_v16_db', '[]'); renderHist(); } }
