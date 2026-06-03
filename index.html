@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvNzg3OTAwNzEtOTNmMi00ZGU3LThkYjQtZGNiOGNjMjhiNDViIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS91c2VyLWF0dGFjaG1lbnRzL2Fzc2V0cy83ODc5MDA3MS05M2YyLTRkZTctOGRiNC1kY2I4Y2MyOGI0NWIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIKICAgIH0KICBdCn0=">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvNzg3OTAwNzEtOTNmMi00ZGU3LThkYjQtZGNiOGNjMjhiNDViIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS91c2VyLWF0dGFjaG1lbnRzL2Fzc2V0cy83ODc5MDA3MS05M2YyLTRkZTctOGRiNC1kY2I4Y2MyOGI0NWIiLAogICAgICAtypeIjogImltYWdlL3BuZyIsCiAgICAgICJzaXplcyI6ICIxOT ryeDE5MiIKICAgIH0KICBdCn0=">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -100,7 +100,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v2.0.0</span>
+            <span class="version-text">v2.0.1</span>
         </div>
     </header>
 
@@ -172,7 +172,7 @@
         </div>
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Data</th><th>Insp</th><th>Ref</th><th>Missão</th><th>DM</th><th>Status</th><th>Etiqueta</th></tr></thead>
+                <thead><tr><th>Data</th><th>Hora</th><th>Insp</th><th>Ref</th><th>Missão</th><th>DM</th><th>Status</th><th>Etiqueta</th></tr></thead>
                 <tbody id="tbody-hist"></tbody>
             </table>
         </div>
@@ -206,7 +206,6 @@
 <datalist id="dl-missoes"></datalist>
 
 <script>
-    // Injeção segura do Service Worker Inline via Data URI Base64 (Compatível com PWA e mantém mesma origem)
     if ('serviceWorker' in navigator) {
         const swCode = "const CACHE_NAME = 'trigo-v16'; self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./']))); }); self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))); });";
         const dataUrl = 'data:text/javascript;base64,' + btoa(swCode);
@@ -383,8 +382,8 @@
         document.getElementById('perc-nok').innerText = `${pNOK}%`;
         document.getElementById('bar-ok').style.width = Math.min(pOK, 100) + "%";
         document.getElementById('bar-nok').style.width = Math.min(pNOK, 100) + "%";
-        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm} <small>(${i.status})</small></div>`).reverse().join('');
-        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm}</div>`).reverse().join('');
+        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm} <small>(${i.status}) - ${i.hora || ''}</small></div>`).reverse().join('');
+        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm} <small>- ${i.hora || ''}</small></div>`).reverse().join('');
     }
 
     async function removeFromBuffer(type, idx) {
@@ -410,11 +409,16 @@
     }
 
     async function applyStatus(status) {
+        const agora = new Date();
+        const horaAtual = agora.toLocaleTimeString('pt-PT');
+
         const item = {
             insp: document.getElementById('inspetor').value.trim(),
             ref: document.getElementById('referencia').value.toUpperCase().trim(),
             missao: document.getElementById('missao').value.trim(),
-            dm: tempDM, status: status
+            dm: tempDM, 
+            status: status,
+            hora: horaAtual
         };
         if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
         if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
@@ -494,6 +498,7 @@
 
             return `<tr>
                 <td>${p.data_producao || ''}</td>
+                <td>${p.hora || ''}</td>
                 <td>${p.insp || ''}</td>
                 <td>${p.ref || ''}</td>
                 <td>${p.missao || ''}</td>
@@ -514,7 +519,20 @@
 
     async function exportExcel() {
         const dbList = await getAllFromDB("historico");
-        const ws = XLSX.utils.json_to_sheet(dbList);
+        
+        // Reordenar chaves para o Excel ficar intuitivo
+        const formattedList = dbList.map(item => ({
+            "Data Produção": item.data_producao || "",
+            "Hora": item.hora || "",
+            "Inspetor": item.insp || "",
+            "Referência": item.ref || "",
+            "Missão": item.missao || "",
+            "Data Matrix": item.dm || "",
+            "Status": item.status || "",
+            "Etiqueta": item.etiqueta || ""
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(formattedList);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Dados");
         XLSX.writeFile(wb, "Traca_Export.xlsx");
