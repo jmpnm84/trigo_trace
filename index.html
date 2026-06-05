@@ -100,7 +100,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v2.1.1</span>
+            <span class="version-text">v2.1.2</span>
         </div>
     </header>
 
@@ -172,7 +172,17 @@
         </div>
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Hora</th><th>Data</th><th>Insp</th><th>Ref</th><th>Missão</th><th>DM</th><th>Status</th><th>Etiqueta</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Data</th>
+                        <th>Insp</th>
+                        <th>Ref</th>
+                        <th>Missão</th>
+                        <th>DM</th>
+                        <th>Etiqueta</th>
+                        <th>Status</th> </tr>
+                </thead>
                 <tbody id="tbody-hist"></tbody>
             </table>
         </div>
@@ -511,7 +521,7 @@
             else if (p.status === 'RETRABALHADA') statusClass = 'status-retrabalhada';
             else if (p.status === 'NOK') statusClass = 'status-nok';
 
-            // Alterado aqui: A célula da hora (p.hora) passou para a primeira posição
+            // Alterado aqui: O Status passou para a última posição da linha da tabela (última TD)
             return `<tr>
                 <td>${p.hora || ''}</td>
                 <td>${p.data_producao || ''}</td>
@@ -519,8 +529,8 @@
                 <td>${p.ref || ''}</td>
                 <td>${p.missao || ''}</td>
                 <td>${p.dm || ''}</td>
-                <td><span class="status-badge ${statusClass}">${p.status || ''}</span></td>
                 <td>${p.etiqueta || ''}</td>
+                <td><span class="status-badge ${statusClass}">${p.status || ''}</span></td>
             </tr>`;
         }).join('');
     }
@@ -536,15 +546,16 @@
     async function exportExcel() {
         const dbList = await getAllFromDB("historico");
         
+        // Alterado aqui: A ordem das chaves do objeto define a ordem das colunas no ficheiro Excel gerado
         const formattedList = dbList.map(item => ({
-            "Data Produção": item.data_producao || "",
             "Hora": item.hora || "",
+            "Data Produção": item.data_producao || "",
             "Inspetor": item.insp || "",
             "Referência": item.ref || "",
             "Missão": item.missao || "",
             "Data Matrix": item.dm || "",
-            "Status": item.status || "",
-            "Etiqueta": item.etiqueta || ""
+            "Etiqueta": item.etiqueta || "",
+            "Status": item.status || "" // AGORA É A ÚLTIMA COLUNA DO EXCEL
         }));
 
         const ws = XLSX.utils.json_to_sheet(formattedList);
