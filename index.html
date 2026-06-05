@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvNzg3OTAwNzEtOTNmMi00ZGU3LThkYjQtZGNiOGNjMjhiNDViIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmcomL3VzZXItYXR0YWNobWVudHMvYXNzZXRzLzc4NzkwMDcxLTkzZjItNGRlNy04ZGI0LWRjYjhjYzI4YjQ1YiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgIH0KICBdCn0=">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvNzg3OTAwNzEtOTNmMi00ZGU3LThkYjQtZGNiOGNjMjhiNDViIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHVuLmcomL3VzZXItYXR0YWNobWVudHMvYXNzZXRzLzc4NzkwMDcxLTkzZjItNGRlNy04ZGI0LWRjYjhjYzI4YjQ1YiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgIH0KICBdCn0=">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -100,7 +100,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v2.1.2</span>
+            <span class="version-text">v2.2.0</span>
         </div>
     </header>
 
@@ -174,8 +174,8 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Hora</th>
-                        <th>Data</th>
+                        <th>Data/Hora Registo</th>
+                        <th>Data Produção</th>
                         <th>Insp</th>
                         <th>Ref</th>
                         <th>Missão</th>
@@ -435,7 +435,8 @@
 
     async function applyStatus(status) {
         const agora = new Date();
-        const horaAtual = agora.toLocaleTimeString('pt-PT');
+        // Grava Data e Hora em simultâneo
+        const dataHoraRegisto = agora.toLocaleDateString('pt-PT') + ' ' + agora.toLocaleTimeString('pt-PT');
 
         const item = {
             insp: document.getElementById('inspetor').value.trim(),
@@ -443,7 +444,7 @@
             missao: document.getElementById('missao').value.trim(),
             dm: tempDM, 
             status: status,
-            hora: horaAtual
+            hora: dataHoraRegisto
         };
         if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
         if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
@@ -521,7 +522,6 @@
             else if (p.status === 'RETRABALHADA') statusClass = 'status-retrabalhada';
             else if (p.status === 'NOK') statusClass = 'status-nok';
 
-            // Alterado aqui: O Status passou para a última posição da linha da tabela (última TD)
             return `<tr>
                 <td>${p.hora || ''}</td>
                 <td>${p.data_producao || ''}</td>
@@ -546,16 +546,15 @@
     async function exportExcel() {
         const dbList = await getAllFromDB("historico");
         
-        // Alterado aqui: A ordem das chaves do objeto define a ordem das colunas no ficheiro Excel gerado
         const formattedList = dbList.map(item => ({
-            "Hora": item.hora || "",
+            "Data/Hora Registo": item.hora || "",
             "Data Produção": item.data_producao || "",
             "Inspetor": item.insp || "",
             "Referência": item.ref || "",
             "Missão": item.missao || "",
             "Data Matrix": item.dm || "",
             "Etiqueta": item.etiqueta || "",
-            "Status": item.status || "" // AGORA É A ÚLTIMA COLUNA DO EXCEL
+            "Status": item.status || ""
         }));
 
         const ws = XLSX.utils.json_to_sheet(formattedList);
