@@ -72,7 +72,7 @@
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000; }
         .modal-content { background:white; padding:15px; border-radius:10px; text-align:center; width:95%; max-width:320px; }
         .btn-decision { padding: 12px; font-size: 0.9em; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
-        #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; }
+        #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; white-space: nowrap; }
         
         .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
         .buffer-item:hover { background: #fff5f5; color: var(--nok); }
@@ -100,7 +100,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v2.0.1</span>
+            <span class="version-text">v2.1.0</span>
         </div>
     </header>
 
@@ -332,28 +332,46 @@
         toast.innerText = msg;
         toast.style.background = type === 'success' ? 'var(--ok)' : (type === 'error' ? 'var(--nok)' : 'var(--p)');
         toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        setTimeout(() => { toast.style.display = 'none'; }, 2500);
     }
 
+    // --- ENVIAR EM LOTES (CHUNKS) PARA EVITAR TIMEOUTS E PERDA DE DADOS ---
     async function sendToGoogleDrive(payloadData) {
         if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("COLE_AQUI")) {
             console.warn("URL do Google Script não configurado.");
             return false;
         }
-        try {
-            showPopup("A sincronizar com Google Drive...", "info");
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payloadData)
-            });
-            return true;
-        } catch (error) {
-            console.error("Erro ao enviar dados para o Google Drive:", error);
-            showPopup("Erro na sincronização online!", "error");
-            return false;
+
+        const CHUNK_SIZE = 50; // Divide em grupos de 50 linhas para garantir estabilidade
+        const totalItems = payloadData.length;
+        const totalChunks = Math.ceil(totalItems / CHUNK_SIZE);
+
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * CHUNK_SIZE;
+            const end = start + CHUNK_SIZE;
+            const chunk = payloadData.slice(start, end);
+
+            showPopup(`Nuvem: A sincronizar lote ${i + 1} de ${totalChunks}...`, "info");
+
+            try {
+                // Executa cada fetch sequencialmente e espera o término (no-cors não devolve resposta legível, mas lança erro se cair)
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(chunk)
+                });
+                
+                // Pequena pausa técnica de 300ms entre lotes para respirar o servidor do Google
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+            } catch (error) {
+                console.error(`Erro no lote ${i + 1}:`, error);
+                showPopup(`Falha no lote ${i + 1}. Operação cancelada!`, "error");
+                return false; 
+            }
         }
+        return true;
     }
 
     async function exportToGoogleDriveManual() {
@@ -363,10 +381,10 @@
             return;
         }
         
-        if (confirm(`Deseja exportar todos os ${dbList.length} registos do Histórico para o Google Drive?`)) {
+        if (confirm(`Deseja exportar todos os ${dbList.length} registos do Histórico para o Google Drive de forma segura (em lotes)?`)) {
             const sucesso = await sendToGoogleDrive(dbList);
             if (sucesso) {
-                showPopup("Histórico sincronizado com sucesso!", "success");
+                showPopup("Todo o Histórico foi sincronizado com sucesso!", "success");
             }
         }
     }
@@ -456,6 +474,7 @@
             await savePieceToHist(i);
         }
 
+        // Envia de forma robusta e fracionada para a cloud
         await sendToGoogleDrive(lote);
 
         if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
@@ -463,7 +482,7 @@
         document.getElementById('modal-fecho').style.display = 'none';
         document.getElementById('etiq-final').value = ""; 
         updateUI(); 
-        showPopup("Lote Finalizado e Salvo na Nuvem!"); 
+        showPopup("Lote Finalizado e Processado!"); 
         focusDM();
     }
 
@@ -520,7 +539,6 @@
     async function exportExcel() {
         const dbList = await getAllFromDB("historico");
         
-        // Reordenar chaves para o Excel ficar intuitivo
         const formattedList = dbList.map(item => ({
             "Data Produção": item.data_producao || "",
             "Hora": item.hora || "",
