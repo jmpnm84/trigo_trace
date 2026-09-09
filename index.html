@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvNzg3OTAwNzEtOTNmMi00ZGU3LThkYjQtZGNiOGNjMjhiNDViIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS91c2VyLWF0dGFjaG1lbnRzL2Fzc2V0cy83ODc5MDA3MS05M2YyLTRkZTctOGRiNC1kY2I4Y2MyOGI0NWIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIKICAgIH0KICBdCn0=">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsK    K    ewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS91c2VyLWF0dGFjaG1lbnRzL2Fzc2V0cy83ODc5MDA3MS05M2YyLTRkZTctOGRiNC1kY2I4Y2MyOGI0NWIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIKICAgIH5K  PosK">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -107,7 +107,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.1.0</span>
+            <span class="version-text">v3.1.1</span>
         </div>
     </header>
 
@@ -377,6 +377,7 @@
     function openFechoModal() {
         document.getElementById('fecho-titulo').innerText = `FECHAR LOTE ${currentLoteType}`;
         document.getElementById('data-fecho-lote').valueAsDate = new Date();
+        document.getElementById('etiq-final').value = ""; // Limpa o campo da etiqueta para não puxar a anterior
         document.getElementById('modal-fecho').style.display = 'flex';
     }
 
