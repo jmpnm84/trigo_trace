@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsK    K    ewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS91c2VyLWF0dGFjaG1lbnRzL2Fzc2V0cy83ODc5MDA3MS05M2YyLTRkZTctOGRiNC1kY2I4Y2MyOGI0NWIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIKICAgIH5K  PosK">
+    <link rel="manifest" href="manifest.json">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -107,7 +107,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.1.1</span>
+            <span class="version-text">v4.0.0</span>
         </div>
     </header>
 
@@ -210,25 +210,7 @@
 
 <script>
     if ('serviceWorker' in navigator) {
-        const swCode = `
-            const CACHE_NAME = 'trigo-v17';
-            self.addEventListener('install', e => {
-                e.waitUntil(
-                    caches.open(CACHE_NAME).then(cache => cache.addAll(['./']))
-                    .then(() => self.skipWaiting())
-                );
-            });
-            self.addEventListener('activate', e => {
-                e.waitUntil(self.clients.claim());
-            });
-            self.addEventListener('fetch', e => {
-                e.respondWith(
-                    caches.match(e.request).then(res => res || fetch(e.request))
-                );
-            });
-        `;
-        const dataUrl = 'data:text/javascript;base64,' + btoa(unescape(encodeURIComponent(swCode)));
-        navigator.serviceWorker.register(dataUrl)
+        navigator.serviceWorker.register('sw.js')
             .then(reg => console.log('SW instalado!', reg))
             .catch(err => console.log('Erro SW:', err));
     }
@@ -377,7 +359,7 @@
     function openFechoModal() {
         document.getElementById('fecho-titulo').innerText = `FECHAR LOTE ${currentLoteType}`;
         document.getElementById('data-fecho-lote').valueAsDate = new Date();
-        document.getElementById('etiq-final').value = ""; // Limpa o campo da etiqueta para não puxar a anterior
+        document.getElementById('etiq-final').value = "";
         document.getElementById('modal-fecho').style.display = 'flex';
     }
 
@@ -413,7 +395,7 @@
             <div class="accordion-item">
                 <div class="accordion-header" onclick="toggleAccordion('${etiqueta.replace(/ /g, '')}')">Etiqueta: ${etiqueta || 'N/A'} (${grouped[etiqueta].length} peças)</div>
                 <div id="content-${etiqueta.replace(/ /g, '')}" class="accordion-content">
-                    ${grouped[etiqueta].map(p => `<div>${p.dm} - ${p.status} - ${p.hora}</div>`).join('')}
+                    ${grouped[etiqueta].map(p => `<div>${p.dm} - ${p.status} -${p.hora}</div>`).join('')}
                 </div>
             </div>
         `).join('');
